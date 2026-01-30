@@ -1,0 +1,35 @@
+DATA:
+  data_root: /home/yongbin53/yw/openscene/data/stray_processed/stray_3d
+  data_root_2d_fused_feature: /home/yongbin53/yw/openscene/stray_data_lseg/openscene_input_lseg512
+  feature_2d_extractor: lseg
+  voxel_size: 0.02
+  input_color: False
+  use_shm: False
+
+TEST:
+  split: val
+  labelset: matterport
+  prompt_eng: True
+  mark_no_feature_to_unknown: True
+  feature_type: 'fusion'         # ★ 핵심: fused feature만으로 inference
+  save_feature_as_numpy: False
+  eval_iou: False                # ★ GT 없으니 꺼두기
+  vis_input: True
+  vis_pred: True
+  test_workers: 0
+  test_gpu: [0]
+  test_batch_size: 1
+
+  # fusion 모드에서는 model_path 로드 안 하지만, 코드가 field를 참조할 수 있어서 더미로 둠
+  model_path: 'https://cvg-data.inf.ethz.ch/openscene/models/matterport_openseg.pth.tar'
+  save_folder: /home/yongbin53/yw/openscene/out/stray_lseg_fusion_demo
+  test_repeats: 1
+  arch_3d: MinkUNet18A
+  manual_seed: 3407
+
+Distributed:
+  dist_url: tcp://127.0.0.1:6787
+  dist_backend: 'nccl'
+  multiprocessing_distributed: False
+  world_size: 1
+  rank: 0

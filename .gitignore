@@ -1,0 +1,22 @@
+# checkpoints / weights
+*.ckpt
+*.pth
+*.pt
+*.pth.tar
+
+# openscene exclusions
+openscene/demo/gaps/
+openscene/demo/tmp/
+openscene/demo/demo_data.zip
+openscene/stray_data_lseg/
+openscene/third_party/
+
+# common junk
+__pycache__/
+*.pyc
+*.pyo
+*.swp
+.DS_Store
+.ipynb_checkpoints/
+logs/
+tmp/

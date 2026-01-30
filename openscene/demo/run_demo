@@ -1,0 +1,6 @@
+#!/bin/bash
+
+python3 clip_server.py --out_dir tmp&
+
+./gaps/bin/x86_64/osview region_segmentations/stray_region*.ply openscene_features/RP0_stray_region*.npy -v -tcp
+
