@@ -43,6 +43,9 @@ static int print_debug = 0;
 //내가 추가한 부분//
 static const char *input_floor_prior_filename = NULL;
 static RNScalar floor_prior_alpha = 0.5; // default boost strength
+
+static const char *input_wall_prior_filename = NULL;
+static RNScalar wall_prior_alpha = 0.3;
 // 내가 추가한 부분 //
 
 
@@ -152,7 +155,8 @@ static RNDenseMatrix *category_colors = NULL;
 static RNArray<char *> *category_names = NULL;
 static R3Scene *scene = NULL;
 // 내가 추가한 곳 //
-static RNArray<RNVector *> mesh_floor_priors; // one prior vector per mesh (optional)
+static RNArray<RNVector *> mesh_floor_priors; // one prior vector per mesh
+static RNArray<RNVector *> mesh_wall_priors; 
 // 내가 추가한 곳 //
 
 
@@ -1919,6 +1923,7 @@ UpdateMeshAffinities(void)
     RNDenseMatrix *features = point_features.Kth(m);
     // 내가 추가한 곳 //
     RNBoolean is_floor_query = (!query_string.compare("floor"));
+    RNBoolean is_wall_query  = (!query_string.compare("wall"));
     // 내가 추가한 곳 //
     RNVector *affinities = mesh_affinities[m];
     if (!affinities) continue;
@@ -1942,6 +1947,15 @@ UpdateMeshAffinities(void)
             RNScalar p = (*prior)[i];  // 0/1 or soft
             // Soft boost: value *= (1 + alpha * p)
             value = value * (1.0 + floor_prior_alpha * p);
+          }
+        }
+
+        // Apply wall prior ONLY when query is "wall"
+        if (is_wall_query && (m < mesh_wall_priors.NEntries()) && mesh_wall_priors[m]) {
+          RNVector *prior = mesh_wall_priors[m];
+          if (i < prior->NValues()) {
+            RNScalar p = (*prior)[i];
+            value = value * (1.0 + wall_prior_alpha * p);
           }
         }
         // 내가 추가한 곳 //
@@ -2594,6 +2608,9 @@ ParseArgs(int argc, char **argv)
       // 내가 추가한 부분 //
       else if (!strcmp(*argv, "-floor_prior")) { argc--; argv++; input_floor_prior_filename = *argv; }
       else if (!strcmp(*argv, "-floor_prior_alpha")) { argc--; argv++; floor_prior_alpha = atof(*argv); }
+
+      else if (!strcmp(*argv, "-wall_prior")) { argc--; argv++; input_wall_prior_filename = *argv; }
+      else if (!strcmp(*argv, "-wall_prior_alpha")) { argc--; argv++; wall_prior_alpha = atof(*argv); }
       // 내가 추가한 부분 //
 
       else {
@@ -2666,6 +2683,23 @@ main(int argc, char **argv)
       }
     }
   }
+
+  // Read wall prior(s) if provided (expects one mesh for demo usage)
+  if (input_wall_prior_filename) {
+    if (meshes.NEntries() > 0) {
+      R3Mesh *mesh0 = meshes.Kth(0);
+      RNVector *prior0 = ReadFloorPriorFile(input_wall_prior_filename, mesh0->NVertices());
+      if (prior0) {
+        while (mesh_wall_priors.NEntries() < meshes.NEntries()) mesh_wall_priors.Insert(NULL);
+        mesh_wall_priors[0] = prior0;
+        printf("Loaded wall prior: %s (N=%d) for mesh[0]\n", input_wall_prior_filename, prior0->NValues());
+      }
+      else {
+        printf("Warning: failed to load wall prior, continuing without it.\n");
+      }
+    }
+  }
+
   // 내가 추가한 곳 //
   
   // Open surfels files

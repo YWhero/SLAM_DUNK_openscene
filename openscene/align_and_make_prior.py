@@ -23,7 +23,7 @@ def parse_args():
     ap.add_argument("--max_dist", type=float, default=0.05)
     ap.add_argument("--voxel", type=float, default=0.05, help="downsample voxel for alignment")
     ap.add_argument("--icp_thresh", type=float, default=0.20, help="ICP correspondence threshold (m)")
-    ap.add_argument("--floor_id", type=int, default=1, help="label id treated as floor in pred")
+    ap.add_argument("--label_id", type=int, required=True, help="label id to build prior from (e.g., wall=0, floor=1)")
     ap.add_argument("--sample_mesh", type=int, default=60000)
     ap.add_argument("--sample_mosaic", type=int, default=60000)
     return ap.parse_args()
@@ -97,12 +97,13 @@ def main():
     P_aligned = (T_icp @ P_h.T).T[:, :3].astype(np.float32)
 
     # --- create floor prior by NN to floor points ---
-    floor_mask = (pred == args.floor_id)
-    P_floor = P_aligned[floor_mask]
-    print("mosaic points:", P.shape[0], "floor points:", P_floor.shape[0])
+    mask = (pred == args.label_id)
+    P_cls = P_aligned[mask]
+    print("mosaic points:", P.shape[0], "selected label points:", P_cls.shape[0], "label_id:", args.label_id)
 
-    floor_pcd = to_pcd(P_floor)
-    floor_kdt = o3d.geometry.KDTreeFlann(floor_pcd)
+    cls_pcd = to_pcd(P_cls)
+    cls_kdt = o3d.geometry.KDTreeFlann(cls_pcd)
+
 
     prior = np.zeros((V.shape[0],), dtype=np.uint8)
     max_d2 = args.max_dist * args.max_dist
@@ -110,7 +111,7 @@ def main():
     # iterate mesh vertices and mark if near any floor point
     hit = 0
     for i, v in enumerate(V.astype(np.float64)):
-        _, _, dd = floor_kdt.search_knn_vector_3d(v, 1)
+        _, _, dd = cls_kdt.search_knn_vector_3d(v, 1)
         if len(dd) == 0:
             continue
         if dd[0] <= max_d2:
