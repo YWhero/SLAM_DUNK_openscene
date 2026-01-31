@@ -2,5 +2,7 @@
 
 python3 clip_server.py --out_dir tmp&
 
-./gaps/bin/x86_64/osview region_segmentations/stray_region*.ply openscene_features/RP0_stray_region*.npy -v -tcp
+./gaps/bin/x86_64/osview region_segmentations/stray_region*.ply openscene_features/RP0_stray_region*.npy -v -tcp \
+  -floor_prior /home/yongbin53/yw/openscene/demo/priors/stray_region0_floor_prior.npy \
+  -floor_prior_alpha 0.5
 

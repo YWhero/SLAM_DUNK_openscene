@@ -5,7 +5,6 @@
 *.pth.tar
 
 # openscene exclusions
-openscene/demo/gaps/
 openscene/demo/tmp/
 openscene/demo/demo_data.zip
 openscene/stray_data_lseg/
